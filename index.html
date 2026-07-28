@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAWNTOOLS · Nexus</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      font-family: 'Courier New', monospace;
+      color: #00ff88;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* ===== MATRIX RAIN BACKGROUND ===== */
+    #matrix-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    /* ===== CONTAINER ===== */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.82);
+      border: 2px solid rgba(0, 255, 136, 0.25);
+      border-radius: 24px;
+      padding: 30px;
+      backdrop-filter: blur(2px);
+      box-shadow: 0 0 60px rgba(0, 255, 136, 0.08);
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(0, 255, 136, 0.12);
+      padding-bottom: 18px;
+      margin-bottom: 25px;
+    }
+    .header .title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: #00ff88;
+      text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+      animation: glitch 2.5s infinite;
+    }
+    .header .title span { color: #ff66ff; text-shadow: 0 0 20px rgba(255, 102, 255, 0.3); }
+    @keyframes glitch {
+      0%, 100% { transform: skew(0deg); opacity: 1; }
+      20% { transform: skew(2deg, 1deg); opacity: 0.8; }
+      40% { transform: skew(-2deg, -1deg); opacity: 0.9; }
+      60% { transform: skew(1deg, -1deg); opacity: 0.7; }
+      80% { transform: skew(-1deg, 2deg); opacity: 0.85; }
+    }
+    .header .menu-info {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      opacity: 0.6;
+      flex-wrap: wrap;
+    }
+    .header .menu-info a {
+      color: #00ff88;
+      text-decoration: none;
+      border-bottom: 1px dotted transparent;
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .header .menu-info a:hover {
+      border-bottom-color: #00ff88;
+      opacity: 1;
+    }
+
+    /* ===== STATUS BAR ===== */
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 40px;
+      background: rgba(0, 255, 136, 0.03);
+      border: 1px solid rgba(0, 255, 136, 0.08);
+      border-radius: 12px;
+      padding: 14px 22px;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .status-bar .item {
+      display: flex;
+      gap: 6px;
+      opacity: 0.7;
+    }
+    .status-bar .item .label { opacity: 0.4; }
+    .status-bar .item .value { font-weight: 700; color: #00ff88; }
+
+    /* ===== TOOLS GRID ===== */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 18px;
+      margin-top: 12px;
+    }
+    .tool-card {
+      background: rgba(0, 255, 136, 0.02);
+      border: 1px solid rgba(0, 255, 136, 0.1);
+      border-radius: 16px;
+      padding: 20px 22px 18px;
+      transition: 0.35s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(2px);
+    }
+    .tool-card:hover {
+      background: rgba(0, 255, 136, 0.06);
+      border-color: #00ff88;
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 0 35px rgba(0, 255, 136, 0.08);
+    }
+    .tool-card .name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #00ff88;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
+    }
+    .tool-card .desc {
+      font-size: 13px;
+      opacity: 0.5;
+      margin-bottom: 14px;
+      flex: 1;
+      line-height: 1.4;
+    }
+    .tool-card .badge {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ff66ff;
+      border: 1px solid rgba(255, 102, 255, 0.15);
+      border-radius: 20px;
+      padding: 2px 14px;
+      display: inline-block;
+      align-self: flex-start;
+      margin-bottom: 12px;
+      background: rgba(255, 102, 255, 0.03);
+    }
+    .tool-card .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(0, 255, 136, 0.25);
+      color: #00ff88;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.3s;
+      align-self: flex-end;
+      font-family: 'Courier New', monospace;
+    }
+    .tool-card .nav-btn:hover {
+      background: #00ff88;
+      color: #0a0a0a;
+      border-color: #00ff88;
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.2);
+    }
+
+    /* ===== PAGE CONTAINER ===== */
+    .page-container {
+      display: none;
+      margin-top: 30px;
+      border-top: 1px solid rgba(0, 255, 136, 0.06);
+      padding-top: 25px;
+    }
+    .page-container.active { display: block; }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      color: #00ff88;
+      font-size: 22px;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: 0.3s;
+      margin-bottom: 18px;
+      font-family: 'Courier New', monospace;
+    }
+    .back-btn:hover { opacity: 1; }
+
+    /* ===== INPUTS & BUTTONS ===== */
+    .input-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+    .input-group input,
+    .input-group select {
+      flex: 1;
+      background: rgba(0, 255, 136, 0.04);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      color: #00ff88;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+      outline: none;
+      min-width: 180px;
+      transition: 0.3s;
+    }
+    .input-group input:focus,
+    .input-group select:focus {
+      border-color: #00ff88;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.06);
+    }
+    .input-group input[type="color"] {
+      padding: 4px;
+      height: 48px;
+      cursor: pointer;
+    }
+
+    .btn {
+      background: transparent;
+      border: 1px solid #00ff88;
+      color: #00ff88;
+      padding: 12px 30px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .btn:hover {
+      background: #00ff88;
+      color: #0a0a0a;
+      box-shadow: 0 0 40px rgba(0, 255, 136, 0.2);
+    }
+
+    .iqc-settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .iqc-settings label {
+      color: rgba(0, 255, 136, 0.6);
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .iqc-settings input,
+    .iqc-settings select {
+      background: rgba(0, 255, 136, 0.04);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      color: #00ff88;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      outline: none;
+    }
+    .iqc-settings input:focus,
+    .iqc-settings select:focus { border-color: #00ff88; }
+
+    /* ===== RESULT BOX ===== */
+    .result-box {
+      margin-top: 20px;
+      background: rgba(0, 255, 136, 0.02);
+      border: 1px solid rgba(0, 255, 136, 0.08);
+      border-radius: 14px;
+      padding: 22px;
+      animation: fadeUp 0.5s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .result-box .line {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0, 255, 136, 0.04);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .result-box .label {
+      color: rgba(0, 255, 136, 0.5);
+      min-width: 130px;
+    }
+    .result-box .value {
+      color: #00ff88;
+      font-weight: 700;
+      word-break: break-all;
+    }
+    .result-box .value.highlight { color: #ff66ff; }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .image-grid img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 255, 136, 0.08);
+      transition: 0.3s;
+    }
+    .image-grid img:hover { border-color: #00ff88; transform: scale(1.02); }
+
+    .iqc-result-img {
+      max-width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(0, 255, 136, 0.12);
+      margin-top: 16px;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.04);
+    }
+
+    .video-link {
+      color: #ff66ff;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .video-link:hover { text-decoration: underline; }
+
+    /* ===== LOADING INDICATOR (HACKER STYLE) ===== */
+    .loading-indicator {
+      display: none;
+      text-align: center;
+      margin: 25px 0;
+      padding: 20px;
+      background: rgba(0, 255, 136, 0.02);
+      border: 1px solid rgba(0, 255, 136, 0.06);
+      border-radius: 14px;
+    }
+    .loading-indicator .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0, 255, 136, 0.05);
+      border-top: 4px solid #00ff88;
+      border-radius: 50%;
+      animation: spin 0.8s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.06);
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading-indicator .loading-text {
+      margin-top: 14px;
+      font-size: 15px;
+      letter-spacing: 4px;
+      opacity: 0.5;
+      animation: pulse 1.2s infinite;
+      font-weight: 300;
+    }
+    .loading-indicator .loading-text::after {
+      content: '';
+      animation: dots 1.5s steps(4) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+      100% { content: ''; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.2; }
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      opacity: 0.15;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 255, 136, 0.04);
+      letter-spacing: 4px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .container { padding: 16px; }
+      .header .title { font-size: 24px; }
+      .status-bar { flex-direction: column; gap: 6px; padding: 12px 16px; }
+      .tools-grid { grid-template-columns: 1fr; }
+      .iqc-settings { grid-template-columns: 1fr; }
+      .header .menu-info { gap: 10px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== MATRIX RAIN CANVAS ===== -->
+<canvas id="matrix-canvas"></canvas>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="title">⬡ FAWN<span>TOOLS</span></div>
+    <div class="menu-info">
+      <a onclick="alert('📌 About Dev: FAWNTOOLS by RipppXyz')">About Dev</a>
+      <a onclick="alert('📩 Report Bug: @ripppxyz')">Report Bug</a>
+      <a onclick="alert('💡 Saran: ripppxyz@gmail.com')">Saran</a>
+      <a onclick="alert('🚀 Ide: chat @ripppxyz')">Ide</a>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="item"><span class="label">NEGARA</span><span class="value">Indonesia</span></div>
+    <div class="item"><span class="label">DEVICE</span><span class="value">Browser</span></div>
+    <div class="item"><span class="label">BROWSER</span><span class="value">Chrome</span></div>
+    <div class="item"><span class="label">STATUS</span><span class="value">Online</span></div>
+  </div>
+
+  <!-- TOOLS GRID -->
+  <h2 style="font-size:18px;font-weight:400;opacity:0.4;margin-bottom:16px;letter-spacing:4px;">✦ SEMUA TOOLS</h2>
+  <div class="tools-grid">
+    <div class="tool-card" data-page="iqc"><div class="name">📱 Fake Chat</div><div class="desc">Screenshot chat iPhone palsu (custom warna, jam, provider)</div><div class="badge">INTERAKTIF</div><button class="nav-btn">➡️ Buka</button></div>
+    <div class="tool-card" data-page="imagesearch"><div class="name">🖼️ Image Search</div><div class="desc">Cari gambar dari DuckDuckGo (aman 18+)</div><div class="badge">GAMBAR</div><button class="nav-btn">➡️ Buka</button></div>
+    <div class="tool-card" data-page="weather"><div class="name">🌤️ Cuaca</div><div class="desc">Cek cuaca kota mana pun (OpenWeatherMap)</div><div class="badge">REAL TIME</div><button class="nav-btn">➡️ Buka</button></div>
+    <div class="tool-card" data-page="gempa"><div class="name">🌋 Gempa Terkini</div><div class="desc">Data gempa terbaru dari BMKG</div><div class="badge">REAL TIME</div><button class="nav-btn">➡️ Buka</button></div>
+    <div class="tool-card" data-page="komik"><div class="name">📚 Baca Komik</div><div class="desc">Cari manga/manhwa/manhua (Komiku API)</div><div class="badge">MANGA</div><button class="nav-btn">➡️ Buka</button></div>
+    <div class="tool-card" data-page="tiktok"><div class="name">🎵 TikTok Downloader</div><div class="desc">Download video TikTok tanpa watermark</div><div class="badge">DOWNLOAD</div><button class="nav-btn">➡️ Buka</button></div>
+    <div class="tool-card" data-page="instagram"><div class="name">📸 Instagram Downloader</div><div class="desc">Download foto/video dari Instagram</div><div class="badge">DOWNLOAD</div><button class="nav-btn">➡️ Buka</button></div>
+  </div>
+
+  <!-- ===== PAGES ===== -->
+  <!-- IQC -->
+  <div class="page-container" id="page-iqc">
+    <button class="back-btn" onclick="backToDashboard()">⬅️ Kembali</button>
+    <h3>📱 Fake Chat iPhone</h3>
+    <p style="opacity:0.4;font-size:14px;margin:6px 0 16px;">Ketik pesan & atur warna, jam, provider.</p>
+    <div class="input-group">
+      <input type="text" id="iqc-text" placeholder="Pesan...">
+      <button class="btn" onclick="generateIQC()">▶ Generate</button>
+    </div>
+    <div class="iqc-settings">
+      <label>Warna Bubble <input type="color" id="iqc-bubble" value="#34C759"></label>
+      <label>Warna Menu <input type="color" id="iqc-menu" value="#1C1C1E"></label>
+      <label>Warna Teks <input type="color" id="iqc-textcolor" value="#FFFFFF"></label>
+      <label>Font <input type="text" id="iqc-font" value="Poppins"></label>
+      <label>Jam Chat <input type="text" id="iqc-chattime" value="12.20"></label>
+      <label>Jam Status Bar <input type="text" id="iqc-statustime" value="12.20"></label>
+      <label>Provider <input type="text" id="iqc-provider" value="Telkomsel"></label>
+    </div>
+    <div id="iqc-loading" class="loading-indicator"><div class="spinner"></div><div class="loading-text">GENERATING</div></div>
+    <div id="iqc-result"></div>
+  </div>
+
+  <!-- IMAGE SEARCH -->
+  <div class="page-container" id="page-imagesearch">
+    <button class="back-btn" onclick="backToDashboard()">⬅️ Kembali</button>
+    <h3>🖼️ Image Search</h3>
+    <div class="input-group">
+      <input type="text" id="img-keyword" placeholder="kucing lucu, onlinejkt48, ...">
+      <button class="btn" onclick="searchImage()">▶ Cari</button>
+    </div>
+    <div id="img-loading" class="loading-indicator"><div class="spinner"></div><div class="loading-text">FETCHING IMAGES</div></div>
+    <div id="img-result"></div>
+  </div>
+
+  <!-- CUACA -->
+  <div class="page-container" id="page-weather">
+    <button class="back-btn" onclick="backToDashboard()">⬅️ Kembali</button>
+    <h3>🌤️ Cuaca</h3>
+    <div class="input-group">
+      <input type="text" id="weather-city" placeholder="Jakarta, Bandung, ...">
+      <button class="btn" onclick="getWeather()">▶ Cek</button>
+    </div>
+    <div id="weather-loading" class="loading-indicator"><div class="spinner"></div><div class="loading-text">FETCHING WEATHER</div></div>
+    <div id="weather-result"></div>
+  </div>
+
+  <!-- GEMPA -->
+  <div class="page-container" id="page-gempa">
+    <button class="back-btn" onclick="backToDashboard()">⬅️ Kembali</button>
+    <h3>🌋 Gempa Terkini</h3>
+    <button class="btn" onclick="getGempa()" style="margin:12px 0">▶ Refresh Data</button>
+    <div id="gempa-loading" class="loading-indicator"><div class="spinner"></div><div class="loading-text">FETCHING DATA</div></div>
+    <div id="gempa-result"></div>
+  </div>
+
+  <!-- KOMIK -->
+  <div class="page-container" id="page-komik">
+    <button class="back-btn" onclick="backToDashboard()">⬅️ Kembali</button>
+    <h3>📚 Baca Komik</h3>
+    <p style="opacity:0.4;font-size:14px;margin:6px 0 16px;">Cari manga/manhwa/manhua (Komiku API)</p>
+    <div class="input-group">
+      <input type="text" id="komik-keyword" placeholder="Judul komik...">
+      <button class="btn" onclick="searchKomik()">▶ Cari</button>
+    </div>
+    <div id="komik-loading" class="loading-indicator"><div class="spinner"></div><div class="loading-text">FETCHING COMIC</div></div>
+    <div id="komik-result"></div>
+  </div>
+
+  <!-- TIKTOK -->
+  <div class="page-container" id="page-tiktok">
+    <button class="back-btn" onclick="backToDashboard()">⬅️ Kembali</button>
+    <h3>🎵 TikTok Downloader</h3>
+    <p style="opacity:0.4;font-size:14px;margin:6px 0 16px;">Download video TikTok tanpa watermark</p>
+    <div class="input-group">
+      <input type="text" id="tiktok-url" placeholder="Link TikTok...">
+      <button class="btn" onclick="downloadTiktok()">▶ Download</button>
+    </div>
+    <div id="tiktok-loading" class="loading-indicator"><div class="spinner"></div><div class="loading-text">FETCHING VIDEO</div></div>
+    <div id="tiktok-result"></div>
+  </div>
+
+  <!-- INSTAGRAM -->
+  <div class="page-container" id="page-instagram">
+    <button class="back-btn" onclick="backToDashboard()">⬅️ Kembali</button>
+    <h3>📸 Instagram Downloader</h3>
+    <p style="opacity:0.4;font-size:14px;margin:6px 0 16px;">Download foto/video dari Instagram</p>
+    <div class="input-group">
+      <input type="text" id="instagram-url" placeholder="Link Instagram...">
+      <button class="btn" onclick="downloadInstagram()">▶ Download</button>
+    </div>
+    <div id="instagram-loading" class="loading-indicator"><div class="spinner"></div><div class="loading-text">FETCHING MEDIA</div></div>
+    <div id="instagram-result"></div>
+  </div>
+
+  <div class="footer">● FAWNTOOLS ● NEXUS ● v7.0 ● ENCRYPTED ●</div>
+</div>
+
+<script>
+  // ============================================================
+  // MATRIX RAIN
+  // ============================================================
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+  let width, height, columns, drops;
+
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    columns = Math.floor(width / 20);
+    drops = Array(columns).fill(1);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  function drawMatrix() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#00ff88';
+    ctx.font = '18px monospace';
+    for (let i = 0; i < drops.length; i++) {
+      const text = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(text, i * 20, drops[i] * 18);
+      if (drops[i] * 18 > height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+  }
+  setInterval(drawMatrix, 50);
+
+  // ============================================================
+  // NAVIGASI
+  // ============================================================
+  function showPage(id) {
+    document.querySelectorAll('.page-container').forEach(el => el.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    document.querySelector('.tools-grid').style.display = 'none';
+    document.querySelector('.status-bar').style.display = 'none';
+    document.querySelector('h2').style.display = 'none';
+  }
+  function backToDashboard() {
+    document.querySelectorAll('.page-container').forEach(el => el.classList.remove('active'));
+    document.querySelector('.tools-grid').style.display = 'grid';
+    document.querySelector('.status-bar').style.display = 'flex';
+    document.querySelector('h2').style.display = 'block';
+  }
+
+  document.querySelectorAll('.tool-card[data-page]').forEach(c => {
+    c.addEventListener('click', function(e) {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+        const page = this.dataset.page;
+        showPage(page);
+        if (page === 'gempa' && !document.getElementById('gempa-result').innerHTML) getGempa();
+      }
+    });
+  });
+
+  // ============================================================
+  // FUNGSI-FUNGSI (dengan loading)
+  // ============================================================
+
+  // Helper: tampilkan loading
+  function showLoading(id) {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'block'; el.previousElementSibling?.querySelector('.spinner')?.classList.add('active'); }
+  }
+  function hideLoading(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+
+  // IQC
+  async function generateIQC() {
+    const text = document.getElementById('iqc-text').value.trim();
+    if (!text) return alert('Isi pesannya dulu bro!');
+    const p = new URLSearchParams({
+      text,
+      bubbleColor: document.getElementById('iqc-bubble').value || '#34C759',
+      menuColor: document.getElementById('iqc-menu').value || '#1C1C1E',
+      textColor: document.getElementById('iqc-textcolor').value || '#FFFFFF',
+      fontName: document.getElementById('iqc-font').value || 'Poppins',
+      chatTime: document.getElementById('iqc-chattime').value || '12.20',
+      statusBarTime: document.getElementById('iqc-statustime').value || '12.20',
+      signalName: document.getElementById('iqc-provider').value || 'Telkomsel'
+    });
+    const load = document.getElementById('iqc-loading');
+    const res = document.getElementById('iqc-result');
+    load.style.display = 'block';
+    res.innerHTML = '';
+    try {
+      const r = await fetch('/api/iqc?' + p);
+      if (!r.ok) throw new Error('Gagal generate');
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">PESAN</span><span class="value highlight">${text}</span></div><div class="line"><span class="label">BUBBLE</span><span class="value">${p.get('bubbleColor')}</span></div><div class="line"><span class="label">PROVIDER</span><span class="value">${p.get('signalName')}</span></div><div class="line"><span class="label">WAKTU</span><span class="value">${p.get('chatTime')}</span></div><img src="${url}" class="iqc-result-img" /><p style="margin-top:12px;opacity:0.3;font-size:12px;">Klik kanan → Save Image</p></div>`;
+    } catch (e) {
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">${e.message}</span></div></div>`;
+    } finally { load.style.display = 'none'; }
+  }
+
+  // IMAGE SEARCH
+  async function searchImage() {
+    const q = document.getElementById('img-keyword').value.trim();
+    if (!q) return alert('Masukin keyword!');
+    const load = document.getElementById('img-loading');
+    const res = document.getElementById('img-result');
+    load.style.display = 'block';
+    res.innerHTML = '';
+    try {
+      const r = await fetch('/api/imagesearch?q=' + encodeURIComponent(q));
+      const d = await r.json();
+      if (d.status === 'error') {
+        res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">${d.message}</span></div></div>`;
+        return;
+      }
+      let html = '<div class="image-grid">';
+      d.images.forEach(u => {
+        html += `<img src="${u}" loading="lazy" onerror="this.style.display='none'" />`;
+      });
+      html += '</div>';
+      res.innerHTML = html;
+    } catch (e) {
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">Gagal ambil gambar</span></div></div>`;
+    } finally { load.style.display = 'none'; }
+  }
+
+  // CUACA
+  async function getWeather() {
+    const city = document.getElementById('weather-city').value.trim();
+    if (!city) return alert('Masukin kota!');
+    const load = document.getElementById('weather-loading');
+    const res = document.getElementById('weather-result');
+    load.style.display = 'block';
+    res.innerHTML = '';
+    try {
+      const r = await fetch('/api/weather?city=' + encodeURIComponent(city));
+      const d = await r.json();
+      if (d.status === 'error') {
+        res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">${d.message}</span></div></div>`;
+        return;
+      }
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">KOTA</span><span class="value highlight">${d.city}, ${d.country}</span></div><div class="line"><span class="label">SUHU</span><span class="value">${d.temp}°C (terasa ${d.feels_like}°C)</span></div><div class="line"><span class="label">KONDISI</span><span class="value">${d.description}</span></div><div class="line"><span class="label">KELEMBABAN</span><span class="value">${d.humidity}%</span></div><div class="line"><span class="label">ANGIN</span><span class="value">${d.wind_speed} m/s</span></div><div class="line"><span class="label">TEKANAN</span><span class="value">${d.pressure} hPa</span></div><div style="margin-top:12px;"><img src="${d.icon}" /></div></div>`;
+    } catch (e) {
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">Gagal cek cuaca</span></div></div>`;
+    } finally { load.style.display = 'none'; }
+  }
+
+  // GEMPA
+  async function getGempa() {
+    const load = document.getElementById('gempa-loading');
+    const res = document.getElementById('gempa-result');
+    load.style.display = 'block';
+    res.innerHTML = '';
+    try {
+      const r = await fetch('/api/gempa');
+      const d = await r.json();
+      if (d.status === 'error') {
+        res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">${d.message}</span></div></div>`;
+        return;
+      }
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">TANGGAL</span><span class="value">${d.tanggal} ${d.jam}</span></div><div class="line"><span class="label">MAGNITUDO</span><span class="value highlight">${d.magnitudo}</span></div><div class="line"><span class="label">KEDALAMAN</span><span class="value">${d.kedalaman}</span></div><div class="line"><span class="label">WILAYAH</span><span class="value">${d.wilayah}</span></div><div class="line"><span class="label">POTENSI</span><span class="value">${d.potensi}</span></div><div class="line"><span class="label">DIRASAKAN</span><span class="value">${d.dirasakan}</span></div><div class="line"><span class="label">KOORDINAT</span><span class="value">${d.koordinat}</span></div></div>`;
+    } catch (e) {
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">Gagal ambil data gempa</span></div></div>`;
+    } finally { load.style.display = 'none'; }
+  }
+
+  // KOMIK
+  async function searchKomik() {
+    const q = document.getElementById('komik-keyword').value.trim();
+    if (!q) return alert('Masukin judul komik!');
+    const load = document.getElementById('komik-loading');
+    const res = document.getElementById('komik-result');
+    load.style.display = 'block';
+    res.innerHTML = '';
+    try {
+      const r = await fetch('/api/komik?q=' + encodeURIComponent(q));
+      const d = await r.json();
+      if (d.status === 'error') {
+        res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">${d.message}</span></div></div>`;
+        return;
+      }
+      let thumb = '', link = '';
+      if (d.thumbnail) thumb = `<div class="line"><span class="label">THUMBNAIL</span><span class="value"><img src="${d.thumbnail}" style="max-width:150px;border-radius:8px;margin-top:8px;" /></span></div>`;
+      if (d.link) link = `<div class="line"><span class="label">LINK</span><span class="value"><a href="${d.link}" target="_blank" style="color:#ff66ff;">Baca Komik</a></span></div>`;
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">JUDUL</span><span class="value highlight">${d.title}</span></div><div class="line"><span class="label">CHAPTER</span><span class="value">${d.chapter}</span></div>${thumb}${link}</div>`;
+    } catch (e) {
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">Gagal ambil komik</span></div></div>`;
+    } finally { load.style.display = 'none'; }
+  }
+
+  // TIKTOK
+  async function downloadTiktok() {
+    const url = document.getElementById('tiktok-url').value.trim();
+    if (!url) return alert('Masukin link TikTok!');
+    const load = document.getElementById('tiktok-loading');
+    const res = document.getElementById('tiktok-result');
+    load.style.display = 'block';
+    res.innerHTML = '';
+    try {
+      const r = await fetch('/api/tiktok?url=' + encodeURIComponent(url));
+      const d = await r.json();
+      if (d.status === 'error') {
+        res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">${d.message}</span></div></div>`;
+        return;
+      }
+      let thumb = '';
+      if (d.thumbnail) thumb = `<div class="line"><span class="label">THUMBNAIL</span><span class="value"><img src="${d.thumbnail}" style="max-width:150px;border-radius:8px;margin-top:8px;" /></span></div>`;
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">JUDUL</span><span class="value highlight">${d.title}</span></div><div class="line"><span class="label">DURASI</span><span class="value">${d.duration}</span></div>${thumb}<div class="line"><span class="label">DOWNLOAD</span><span class="value"><a href="${d.video}" target="_blank" class="video-link" download>▶ Klik untuk download video</a></span></div></div>`;
+    } catch (e) {
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">Gagal download TikTok</span></div></div>`;
+    } finally { load.style.display = 'none'; }
+  }
+
+  // INSTAGRAM
+  async function downloadInstagram() {
+    const url = document.getElementById('instagram-url').value.trim();
+    if (!url) return alert('Masukin link Instagram!');
+    const load = document.getElementById('instagram-loading');
+    const res = document.getElementById('instagram-result');
+    load.style.display = 'block';
+    res.innerHTML = '';
+    try {
+      const r = await fetch('/api/instagram?url=' + encodeURIComponent(url));
+      const d = await r.json();
+      if (d.status === 'error') {
+        res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">${d.message}</span></div></div>`;
+        return;
+      }
+      let author = '';
+      if (d.author_url) author = `<div class="line"><span class="label">PROFIL</span><span class="value"><a href="${d.author_url}" target="_blank" style="color:#ff66ff;">${d.author_url}</a></span></div>`;
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">JUDUL</span><span class="value highlight">${d.title}</span></div><div class="line"><span class="label">AUTHOR</span><span class="value">${d.author}</span></div>${author}<div class="line"><span class="label">THUMBNAIL</span><span class="value"><img src="${d.thumbnail}" style="max-width:100%;border-radius:8px;margin-top:8px;" /></span></div></div>`;
+    } catch (e) {
+      res.innerHTML = `<div class="result-box"><div class="line"><span class="label">ERROR</span><span class="value highlight">Gagal download Instagram</span></div></div>`;
+    } finally { load.style.display = 'none'; }
+  }
+</script>
+</body>
+</html>
