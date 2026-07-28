@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import * as { generateIQC } from 'iqc-canvas';
+import { generateIQC } from 'iqc-canvas';
 
 const app = express();
 
