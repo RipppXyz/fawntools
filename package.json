@@ -1,21 +1,13 @@
 {
   "name": "fawntools",
   "version": "1.0.0",
-  "description": "FAWNTOOLS - Image Search, Fake Chat iPhone, Cuaca, Gempa",
   "type": "module",
-  "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12",
-    "iqc-canvas": "^1.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "author": "Your Name",
-  "license": "MIT"
+    "cheerio": "^1.0.0-rc.12"
+  }
 }
